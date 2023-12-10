@@ -1,97 +1,67 @@
-import feedparser
-from datetime import datetime, timedelta
+import requests
+from twilio.rest import Client
+import smtplib
 
-folders = []
-unorginized_sources = []
+server = smtplib.SMTP('smtp.gmail.com', 587)
+server.starttls()
+server.login("groupprojhackthenest@gmail.com", "joemama!22")
 
-class folder:
-    name = ""
-    sources = []
 
-    def __init__(self, name):
-        self.name = name
-        self.sources = []
+    # account_sid = 'AC8d3a21849e43ae8e0886a75bac741aee'
+    # auth_token = SMS_TKN
+    # client = Client(account_sid, auth_token)
 
-    def add_source(self, source):
-        self.sources.append(source)
+    # message = client.messages.create(
+    # from_='+18444801049',
+    # body='Hello from Twilio',
+    # to='+18777804236'
+    # )
 
-    def remove_source(self, source):
-        self.sources.remove(source)
+    # print(message.sid)
+    # Don't work
 
-    def get_name(self):
-        return self.name
+STOCK_NAME = "NVDA"
+COMPANY_NAME = "NVIDIA Corp"
+STOCK_ENDPOINT = "https://www.alphavantage.co/query"
+NEWS_ENDPOINT = "https://newsapi.org/v2/everything"
+STOCK_API_KEY = "EHGL1SJUYHLB3CDE"
+NEWS_API_KEY = "94ae0b563ace46ae83fc42f41eaef314"
+SMS_SID = "AC8d3a21849e43ae8e0886a75bac741aee"
+SMS_TKN = "d73364f9e93d9e542962ab947fd1a73c"
 
-    def get_sources(self):
-        return self.sources
+
+
+stock_parameters = {
+    "function": "TIME_SERIES_DAILY",
+    "symbol": STOCK_NAME,
+    "apikey": STOCK_API_KEY
+}
+resp = requests.get(STOCK_ENDPOINT, params=stock_parameters)
+data = resp.json()["Time Series (Daily)"]
+data_values = [value for (key, value) in data.items()]
+yesterday_data = data_values[0]
+yesterday_close_price = yesterday_data["4. close"]
+two_days_before_data = data_values[1]
+two_day_before_close_price = two_days_before_data["4. close"]
+
+difference = abs(float(yesterday_close_price) - float(two_day_before_close_price))
+print(difference)
+percent_difference = (difference/float(yesterday_close_price)) * 100
+
+if percent_difference > .1:
+    news_parameters = {
+        "apiKey": NEWS_API_KEY,
+        "qInTitle": COMPANY_NAME,
+    }
+    news_resp = requests.get(NEWS_ENDPOINT, params=news_parameters)
+    news_articles = news_resp.json()["articles"]
+    top_3_articles = news_articles[:3]
+    list_of_3_articles = [f"Title: {articles['title']}\n\t Summary: {articles['description']}" for articles in top_3_articles]
+    email_body = "\n".join(list_of_3_articles)
+    server.sendmail("groupprojhackthenest@gmail.com", "zalexep@gmail.com", email_body.encode("utf-8"))
+    print("Ya got some mail!")
+
+
+server.quit()
+
     
-    def get_folder_feed(self):
-        folder_feed = []
-        for source in self.sources:
-            for article in source.articles:
-                folder_feed.append(article)
-        return folder_feed
-
-class source:
-    name = ""
-    url = ""
-    articles = []
-
-    def __init__(self, name, url):
-        self.name = name
-        self.url = url
-        self.articles = self.get_articles(url)
-
-    def update(self):
-        self.articles = self.get_articles(self.url)
-
-    def add_article(self, article):
-        self.articles.append(article)
-
-    def remove_article(self, article):
-        self.articles.remove(article)
-
-    def get_name(self):
-        return self.name
-
-    def get_url(self):
-        return self.url
-    
-    def get_articles(url):
-        feed = feedparser.parse(url)
-        articles = []
-        for entry in feed.entries:
-            title = entry.title
-            date = entry.published
-            description = entry.description
-            link = entry.link
-            articles.append(article(title, date, description, link))
-        return articles
-    
-    def get_articles(self):
-        return self.articles
-    
-    def get_last24(self):
-        last24_articles = []
-        for article in self.articles:
-            if article.date > datetime.now() - timedelta(days=1):
-                last24_articles.append(article)
-        return last24_articles
-    
-
-class article:
-    title = ""
-    date = ""
-    description = ""
-    link = ""  
-
-    def __init__(self, title, date, description, link):
-        self.title = title
-        self.date = date
-        self.description = description
-        self.link = link
-
-def main():
-    pass
-
-if __name__ = "__main__":
-    main()
