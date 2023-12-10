@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All Feeds</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+  <h1>All Feeds</h1>
+  <!-- Display aggregated feed entries -->
+  <div class="list-group">
+    {% for entry in entries %}
+      <a href="{{ entry.link }}" class="list-group-item list-group-item-action">
+        <h5 class="mb-1">{{ entry.title }}</h5>
+        <p class="mb-1">{{ entry.description }}</p>
+        <small>{{ entry.published }}</small>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
